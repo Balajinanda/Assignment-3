@@ -68,7 +68,7 @@ def plot_forecast(year, data, param, covar, predictions=None):
     plt.legend()
     plt.show()
     
-    # Load and preprocess the data for clustering
+# Load and preprocess the data for clustering
 liquid = pd.read_csv("CO2 emissions from liquid fuel consumption (kt).csv", \
                      skiprows=4)
 solid = pd.read_csv("CO2 emissions from solid fuel consumption (kt).csv", \
@@ -112,3 +112,27 @@ plt.show()
 # Find the optimal number of clusters with the highest silhouette score
 optimal_ncluster = np.argmax(silhouette_scores) + 2
 print(f"\nOptimal Number of Clusters: {optimal_ncluster}")
+
+#Set the number of clusters to 2
+ncluster = 2
+kmeans = KMeans(n_clusters=ncluster)
+kmeans.fit(df_cluster)
+labels = kmeans.labels_
+cen = kmeans.cluster_centers_
+xcen = cen[:, 0]
+ycen = cen[:, 1]
+
+#Plot the clusters and cluster centers
+plt.figure(figsize=(6, 5))
+cm = plt.cm.get_cmap('tab10')
+for i, label in enumerate(np.unique(labels)):
+
+    plt.scatter(df_cluster[labels == label, 0], \
+                df_cluster[labels == label, 1], 10, \
+                    label=f"Cluster {label}", cmap=cm, alpha=0.7)
+plt.scatter(xcen, ycen, 45, "k", marker="d", label="Cluster centers")
+plt.xlabel("CO2 from liquid fuel")
+plt.ylabel("CO2 from solid fuel")
+plt.title("Kmeans clustering")
+plt.legend()
+plt.show()
