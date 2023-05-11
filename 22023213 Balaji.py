@@ -67,3 +67,48 @@ def plot_forecast(year, data, param, covar, predictions=None):
     plt.title("Logistic forecast for China")
     plt.legend()
     plt.show()
+    
+    # Load and preprocess the data for clustering
+liquid = pd.read_csv("CO2 emissions from liquid fuel consumption (kt).csv", \
+                     skiprows=4)
+solid = pd.read_csv("CO2 emissions from solid fuel consumption (kt).csv", \
+                    skiprows=4)
+
+# Drop rows with NaN values in 2015
+liquid = liquid[liquid["2015"].notna()]
+solid = solid.dropna(subset=["2015"])
+
+# Merge the datasets for 2015
+liquid2015 = liquid[["Country Name", "Country Code", "2015"]].copy()
+solid2015 = solid[["Country Name", "Country Code", "2015"]].copy()
+df_2015 = pd.merge(liquid2015, solid2015, on="Country Name", how="outer")
+df_2015 = df_2015.dropna()  # Drop entries with missing values
+df_2015 = df_2015.rename(columns={"2015_x": "CO2 from liquid fuel", \
+                                  "2015_y": "CO2 from solid fuel"})
+
+# Perform clustering
+df_cluster = df_2015[["CO2 from liquid fuel", "CO2 from solid fuel"]].copy()
+scaler = StandardScaler()
+df_cluster = scaler.fit_transform(df_cluster)
+
+# Loop over the number of clusters and calculate silhouette scores
+silhouette_scores = []
+for ncluster in range(2, 10):
+    kmeans = KMeans(n_clusters=ncluster)
+    kmeans.fit(df_cluster)
+    labels = kmeans.labels_
+    score = skmet.silhouette_score(df_cluster, labels)
+    silhouette_scores.append(score)
+    print(f"Number of Clusters: {ncluster}, Silhouette Score: {score}")
+    
+# Plot the silhouette scores
+plt.figure()
+plt.plot(range(2, 10), silhouette_scores)
+plt.xlabel("Number of Clusters")
+plt.ylabel("Silhouette Score")
+plt.title("Silhouette Score for Different Numbers of Clusters")
+plt.show()
+
+# Find the optimal number of clusters with the highest silhouette score
+optimal_ncluster = np.argmax(silhouette_scores) + 2
+print(f"\nOptimal Number of Clusters: {optimal_ncluster}")
