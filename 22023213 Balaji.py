@@ -136,3 +136,41 @@ plt.ylabel("CO2 from solid fuel")
 plt.title("Kmeans clustering")
 plt.legend()
 plt.show()
+
+#Read and preprocess the data for CO2 emissions
+CO2 = pd.read_csv("CO2 emissions (kt).csv", skiprows=4)
+CO2 = CO2.set_index('Country Name', drop=True)
+CO2 = CO2.loc[:, '1960':'2021']
+CO2 = CO2.transpose()
+CO2 = CO2.loc[:, 'China']
+df = CO2.dropna(axis=0)
+
+df_co2 = pd.DataFrame()
+df_co2['Year'] = pd.DataFrame(df.index)
+df_co2['CO2 emissions'] = pd.DataFrame(df.values)
+
+#Convert year column to numeric
+df_co2["Year"] = pd.to_numeric(df_co2["Year"])
+
+#Fit the logistic function to the data
+param, covar = curve_fit(logistic, df_co2["Year"], \
+                         df_co2["CO2 emissions"], p0=(1.2e12, 0.03, 1990.0), \
+                             maxfev=10000)
+
+#Generate years for the forecast
+year = np.arange(1960, 2031)
+
+#Plot the forecast
+plot_forecast(year, df_co2, param, covar)
+
+# Generate predictions for the next 10 years
+year_pred = np.arange(2022, 2031)
+predictions = logistic(year_pred, *param)
+
+# Plot the forecast and show predictions
+plot_forecast(year, df_co2, param, covar, predictions)
+
+# Print the predictions
+print("Year\tPredicted CO2 emissions")
+for year, prediction in zip(year_pred, predictions):
+    print(f"{year}\t{prediction}")
